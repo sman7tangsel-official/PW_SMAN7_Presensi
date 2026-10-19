@@ -8,7 +8,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         body { background-color: #f4f7f9; padding: 20px; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .container { max-width: 850px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         
         /* Header Kop Surat */
         .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #1a5276; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }
@@ -40,10 +40,16 @@
         #webcam, #canvas { width: 100%; height: 100%; object-fit: cover; }
         .gps-overlay { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.65); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; }
 
-        /* Button */
+        /* Controls Area Rekap */
+        .rekap-header-controls { display: flex; gap: 8px; align-items: center; }
+        .filter-select { padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; outline: none; }
+
+        /* Buttons */
         .btn-submit { width: 100%; padding: 12px; background-color: #0288d1; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-submit:hover { background-color: #0277bd; }
-        .btn-delete-all { background: #dc2626; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .btn-print-pdf { background-color: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn-print-pdf:hover { background-color: #059669; }
+        .btn-delete-all { background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
 
         /* Table Rekap */
         .table-responsive { overflow-x: auto; margin-top: 25px; }
@@ -51,6 +57,16 @@
         th, td { border: 1px solid #e0e0e0; padding: 8px; text-align: center; }
         th { background-color: #1a5276; color: white; }
         .img-preview { width: 45px; height: 45px; object-fit: cover; border-radius: 4px; }
+
+        /* STYLE CETAK / PRINT PDF */
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; padding: 0; }
+            .no-print, .card-title:first-of-type, #absensiForm, .camera-container, .btn-submit, .btn-delete-all, .rekap-header-controls, .action-col { display: none !important; }
+            table { border: 1px solid #000; width: 100%; }
+            th, td { border: 1px solid #000 !important; color: #000 !important; }
+            th { background-color: #eee !important; }
+        }
     </style>
 </head>
 <body>
@@ -67,26 +83,26 @@
         <img src="logo%20sman7tangsel.jpeg" alt="Logo SMAN 7 Tangsel">
     </div>
 
-    <!-- FORMULIR ABSENSI -->
-    <div class="card-title">
+    <!-- FORMULIR ABSENSI (SEMBUNYI SAAT CETAK) -->
+    <div class="card-title no-print">
         <span><i class="fa-solid fa-pen-to-square"></i> Formulir Presensi Pegawai</span>
     </div>
     
-    <form id="absensiForm">
+    <form id="absensiForm" class="no-print">
         <div class="form-grid">
             <div class="form-group">
                 <label for="pegawaiSelect">Nama Lengkap Pegawai</label>
-                <!-- DAFTAR NAMA & NIP RESMI SESUAI SPREADSHEET -->
+                <!-- DAFTAR NAMA & NIP RESMI -->
                 <select id="pegawaiSelect" required onchange="resetNip()">
                     <option value="">-- Pilih Nama Anda --</option>
                     <option value="198308222025212039" data-nama="Dinnar Mohammad Hasan">Dinnar Mohammad Hasan</option>
                     <option value="200111142025211015" data-nama="Mustakim">Mustakim</option>
-                    <option value="197512252025211050" data-nama="NURADI SUMARNA">NURADI SUMARNA</option>
+                    <option value="197512252025211050" data-nama="Nuradi Sumarna">Nuradi Sumarna</option>
                     <option value="197805102025211106" data-nama="Wawan Setiawan">Wawan Setiawan</option>
                     <option value="198301042025211088" data-nama="Asep nur">Asep nur</option>
                     <option value="199710292025211048" data-nama="Hatta Amanu">Hatta Amanu</option>
-                    <option value="198305122025211009" data-nama="SAHARI">SAHARI</option>
-                    <option value="198402112025211005" data-nama="Yadik">Yadik</option>
+                    <option value="197006142025211030" data-nama="Sahari">Sahari</option>
+                    <option value="198401202025211096" data-nama="Yadik">Yadik</option>
                     <option value="198101192025211059" data-nama="Suparyadi">Suparyadi</option>
                 </select>
             </div>
@@ -137,24 +153,33 @@
     <!-- REKAPITULASI ABSENSI LOKAL PEGAWAI -->
     <div class="table-responsive">
         <div class="card-title" style="margin-top: 20px;">
-            <span><i class="fa-solid fa-list-check"></i> Riwayat Absensi Anda Hari Ini</span>
-            <button type="button" class="btn-delete-all" onclick="hapusRiwayatLokal()"><i class="fa-solid fa-trash"></i> Bersihkan Tampilan</button>
+            <span><i class="fa-solid fa-list-check"></i> Rekapitulasi Absensi Pegawai</span>
+            <div class="rekap-header-controls no-print">
+                <select id="filterTipe" class="filter-select" onchange="muatTabelRiwayat()">
+                    <option value="Semua">Semua Tipe</option>
+                    <option value="Absen Masuk">Absen Masuk</option>
+                    <option value="Absen Pulang">Absen Pulang</option>
+                </select>
+                <button type="button" class="btn-print-pdf" onclick="cetakPDF()"><i class="fa-solid fa-print"></i> Cetak / PDF</button>
+                <button type="button" class="btn-delete-all" onclick="hapusRiwayatLokal()"><i class="fa-solid fa-trash"></i> Bersihkan</button>
+            </div>
         </div>
         <table>
             <thead>
                 <tr>
-                    <th>No</th>
-                    <th>Waktu</th>
-                    <th>Tipe</th>
-                    <th>Nama</th>
-                    <th>Status</th>
-                    <th>Lokasi</th>
-                    <th>Foto</th>
-                    <th>Aksi</th>
+                    <th>NO</th>
+                    <th>TANGGAL & WAKTU</th>
+                    <th>TIPE</th>
+                    <th>NIP</th>
+                    <th>NAMA PEGAWAI</th>
+                    <th>STATUS</th>
+                    <th>KOORDINAT LOKASI</th>
+                    <th>FOTO GEOTAG</th>
+                    <th class="action-col no-print">AKSI</th>
                 </tr>
             </thead>
             <tbody id="tabelAbsensiBody">
-                <tr><td colspan="8">Belum ada data absensi.</td></tr>
+                <tr><td colspan="9">Belum ada data absensi.</td></tr>
             </tbody>
         </table>
     </div>
@@ -194,7 +219,6 @@
         }
     }
 
-    // Fungsi Intip PIN / NIP
     function toggleIntipNip() {
         const inputNip = document.getElementById("nip");
         const toggleIcon = document.getElementById("toggleIcon");
@@ -309,11 +333,16 @@
 
     function muatTabelRiwayat() {
         let listAbsensi = JSON.parse(localStorage.getItem('absensi_p3k_v3')) || [];
+        const filterTipe = document.getElementById('filterTipe') ? document.getElementById('filterTipe').value : "Semua";
         const tbody = document.getElementById('tabelAbsensiBody');
         tbody.innerHTML = "";
 
+        if (filterTipe !== "Semua") {
+            listAbsensi = listAbsensi.filter(item => item.tipe === filterTipe);
+        }
+
         if (listAbsensi.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8">Belum ada data absensi.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9">Belum ada data absensi.</td></tr>';
             return;
         }
 
@@ -323,11 +352,12 @@
                 <td>${index + 1}</td>
                 <td>${item.waktu}</td>
                 <td><b>${item.tipe}</b></td>
+                <td>${item.nip}</td>
                 <td>${item.nama}</td>
                 <td>${item.status}</td>
                 <td>${item.lokasi}</td>
                 <td><img src="${item.foto}" class="img-preview"></td>
-                <td><button onclick="hapusBarisPerSatu(${index})" style="color:red; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button></td>
+                <td class="action-col no-print"><button onclick="hapusBarisPerSatu(${index})" style="color:red; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -347,6 +377,11 @@
             localStorage.removeItem('absensi_p3k_v3');
             muatTabelRiwayat();
         }
+    }
+
+    // FUNGSI MENCETAK REKAPITULASI KE PDF
+    function cetakPDF() {
+        window.print();
     }
 </script>
 </body>
