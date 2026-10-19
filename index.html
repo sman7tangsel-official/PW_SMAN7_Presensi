@@ -18,7 +18,7 @@
         .header-text p { font-size: 12px; color: #666; }
 
         /* Card Form */
-        .card-title { font-size: 16px; font-weight: bold; color: #1a5276; margin-bottom: 15px; border-bottom: 2px solid #eef2f5; padding-bottom: 8px; }
+        .card-title { font-size: 16px; font-weight: bold; color: #1a5276; margin-bottom: 15px; border-bottom: 2px solid #eef2f5; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
         .form-group { display: flex; flex-direction: column; }
@@ -37,6 +37,7 @@
         /* Button */
         .btn-submit { width: 100%; padding: 12px; background-color: #0288d1; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-submit:hover { background-color: #0277bd; }
+        .btn-delete-all { background: #dc2626; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
 
         /* Table Rekap */
         .table-responsive { overflow-x: auto; margin-top: 25px; }
@@ -61,24 +62,26 @@
     </div>
 
     <!-- FORMULIR ABSENSI -->
-    <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Formulir Presensi Pegawai</div>
+    <div class="card-title">
+        <span><i class="fa-solid fa-pen-to-square"></i> Formulir Presensi Pegawai</span>
+    </div>
     
     <form id="absensiForm">
         <div class="form-grid">
             <div class="form-group">
                 <label for="pegawaiSelect">Nama Lengkap Pegawai</label>
-                <!-- KUMPULAN DAFTAR PEGAWAI TERDAFTAR (Nilai 'value' adalah NIP resmi pegawai) -->
+                <!-- DAFTAR NAMA & NIP RESMI SESUAI SPREADSHEET -->
                 <select id="pegawaiSelect" required onchange="resetNip()">
                     <option value="">-- Pilih Nama Anda --</option>
-                    <option value="12345678" data-nama="Dinnar Mohammad Hasan">Dinnar Mohammad Hasan</option>
-                    <option value="1234567890" data-nama="HATTA">HATTA</option>
-                    <option value="12345678" data-nama="NURADI">NURADI</option>
-                    <option value="1122334455667" data-nama="SAHARI">SAHARI</option>
-                    <option value="12345678" data-nama="Wawan Setiawan">Wawan Setiawan</option>
-                    <option value="12345678" data-nama="Yudik">Yudik</option>
-                    <option value="12345678" data-nama="Asep">Asep</option>
-                    <option value="12345678" data-nama="Suparyadi">Suparyadi</option>
-                    <option value="12345678" data-nama="Mustakim">Mustakim</option>
+                    <option value="196908222025212009" data-nama="Dinnar Mohammad Hasan">Dinnar Mohammad Hasan</option>
+                    <option value="200111142025211015" data-nama="Mustakim">Mustakim</option>
+                    <option value="197512252025211050" data-nama="NURADI SUMARNA">NURADI SUMARNA</option>
+                    <option value="197805102025211108" data-nama="Wawan Setiawan">Wawan Setiawan</option>
+                    <option value="198108102025211008" data-nama="Asep nur">Asep nur</option>
+                    <option value="197109202025211048" data-nama="Hulla smamu">Hulla smamu</option>
+                    <option value="198305122025211009" data-nama="SAHARI">SAHARI</option>
+                    <option value="198402112025211005" data-nama="Yudik">Yudik</option>
+                    <option value="198506152025211007" data-nama="Suparyadi">Suparyadi</option>
                 </select>
             </div>
 
@@ -124,7 +127,10 @@
 
     <!-- REKAPITULASI ABSENSI LOKAL PEGAWAI -->
     <div class="table-responsive">
-        <div class="card-title" style="margin-top: 20px;"><i class="fa-solid fa-list-check"></i> Riwayat Absensi Anda Hari Ini</div>
+        <div class="card-title" style="margin-top: 20px;">
+            <span><i class="fa-solid fa-list-check"></i> Riwayat Absensi Anda Hari Ini</span>
+            <button type="button" class="btn-delete-all" onclick="hapusRiwayatLokal()"><i class="fa-solid fa-trash"></i> Bersihkan Tampilan</button>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -135,10 +141,11 @@
                     <th>Status</th>
                     <th>Lokasi</th>
                     <th>Foto</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody id="tabelAbsensiBody">
-                <tr><td colspan="7">Belum ada data absensi.</td></tr>
+                <tr><td colspan="8">Belum ada data absensi.</td></tr>
             </tbody>
         </table>
     </div>
@@ -178,7 +185,6 @@
         }
     }
 
-    // Reset input NIP saat nama pegawai diubah
     function resetNip() {
         var select = document.getElementById("pegawaiSelect");
         var selectedOption = select.options[select.selectedIndex];
@@ -186,7 +192,6 @@
         document.getElementById("nip").value = "";
     }
 
-    // Pembatasan 1x Absen Masuk & 1x Absen Pulang per Hari
     function murniCekAbsenHarian(namaPegawai, tipeAbsen) {
         let listAbsensi = JSON.parse(localStorage.getItem('absensi_p3k_v3')) || [];
         let hariIniStr = new Date().toLocaleDateString('id-ID');
@@ -203,7 +208,6 @@
         return true;
     }
 
-    // Proses Absensi dengan Verifikasi PIN/NIP
     function prosesAbsensip3k() {
         const select = document.getElementById("pegawaiSelect");
         const nipBenar = select.value; 
@@ -222,18 +226,15 @@
             return;
         }
 
-        // Cek apakah NIP/PIN yang diketik sesuai dengan nama yang dipilih
         if (nipInput !== nipBenar) {
             alert("NIP / PIN Rahasia SALAH! Silakan periksa kembali NIP Anda.");
             return;
         }
 
-        // Validasi 1x Absen per Hari
         if (!murniCekAbsenHarian(nama, tipeAbsen)) {
             return;
         }
 
-        // Capture Foto
         const context = canvas.getContext('2d');
         canvas.width = video.videoWidth || 320;
         canvas.height = video.videoHeight || 240;
@@ -287,7 +288,7 @@
         tbody.innerHTML = "";
 
         if (listAbsensi.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7">Belum ada data absensi.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8">Belum ada data absensi.</td></tr>';
             return;
         }
 
@@ -301,9 +302,26 @@
                 <td>${item.status}</td>
                 <td>${item.lokasi}</td>
                 <td><img src="${item.foto}" class="img-preview"></td>
+                <td><button onclick="hapusBarisPerSatu(${index})" style="color:red; border:none; background:none; cursor:pointer;"><i class="fa-solid fa-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    function hapusBarisPerSatu(index) {
+        if (confirm("Hapus baris riwayat ini dari tampilan HP Anda?")) {
+            let listAbsensi = JSON.parse(localStorage.getItem('absensi_p3k_v3')) || [];
+            listAbsensi.splice(index, 1);
+            localStorage.setItem('absensi_p3k_v3', JSON.stringify(listAbsensi));
+            muatTabelRiwayat();
+        }
+    }
+
+    function hapusRiwayatLokal() {
+        if (confirm("Bersihkan seluruh riwayat lokal di perangkat ini?")) {
+            localStorage.removeItem('absensi_p3k_v3');
+            muatTabelRiwayat();
+        }
     }
 </script>
 </body>
