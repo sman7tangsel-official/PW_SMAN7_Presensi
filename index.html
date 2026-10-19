@@ -24,7 +24,6 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #444; }
         .form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
-        .form-group input[readonly] { background-color: #eef2f5; cursor: not-allowed; }
 
         /* Radio Options */
         .radio-group { display: flex; gap: 15px; margin-top: 5px; }
@@ -68,24 +67,24 @@
         <div class="form-grid">
             <div class="form-group">
                 <label for="pegawaiSelect">Nama Lengkap Pegawai</label>
-                <!-- SILAKAN SESUAIKAN/TAMBAHKAN DAFTAR NAMA PEGAWAI DI SINI -->
-                <select id="pegawaiSelect" required onchange="setNipOtomatis()">
+                <!-- KUMPULAN DAFTAR PEGAWAI TERDAFTAR (Nilai 'value' adalah NIP resmi pegawai) -->
+                <select id="pegawaiSelect" required onchange="resetNip()">
                     <option value="">-- Pilih Nama Anda --</option>
                     <option value="12345678" data-nama="Dinnar Mohammad Hasan">Dinnar Mohammad Hasan</option>
-                    <option value="1234567890" data-nama="Hatta amanu">Hatta amanu</option>
-                    <option value="12345678" data-nama="NURADI SUMARNA">NURADI SUMARNA</option>
+                    <option value="1234567890" data-nama="HATTA">HATTA</option>
+                    <option value="12345678" data-nama="NURADI">NURADI</option>
                     <option value="1122334455667" data-nama="SAHARI">SAHARI</option>
-                    <option value="12345678" data-nama="Wawan setiawan">Wawan setiawan</option>
-					<option value="12345678" data-nama="Yadik">Yadik</option>
-					<option value="12345678" data-nama="Asep nur">Asep nur</option>
-					<option value="12345678" data-nama="Suparyadi">Suparyadi</option>
-					<option value="12345678" data-nama="Mustakim">Mustakim</option>
+                    <option value="12345678" data-nama="Wawan Setiawan">Wawan Setiawan</option>
+                    <option value="12345678" data-nama="Yudik">Yudik</option>
+                    <option value="12345678" data-nama="Asep">Asep</option>
+                    <option value="12345678" data-nama="Suparyadi">Suparyadi</option>
+                    <option value="12345678" data-nama="Mustakim">Mustakim</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="nip">NIP / ID P3K</label>
-                <input type="text" id="nip" readonly placeholder="Otomatis terisi">
+                <label for="nip">Masukkan NIP / PIN Rahasia</label>
+                <input type="password" id="nip" placeholder="Ketik NIP Anda di sini..." required>
                 <input type="hidden" id="nama">
             </div>
         </div>
@@ -152,7 +151,6 @@
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('canvas');
 
-    // 1. Inisialisasi Kamera & GPS
     window.onload = function() {
         initKamera();
         initGPS();
@@ -180,15 +178,15 @@
         }
     }
 
-    // 2. Set NIP Otomatis
-    function setNipOtomatis() {
+    // Reset input NIP saat nama pegawai diubah
+    function resetNip() {
         var select = document.getElementById("pegawaiSelect");
         var selectedOption = select.options[select.selectedIndex];
-        document.getElementById("nip").value = select.value;
         document.getElementById("nama").value = selectedOption.getAttribute("data-nama") || "";
+        document.getElementById("nip").value = "";
     }
 
-    // 3. Validasi Hanya 1x Absen per Hari
+    // Pembatasan 1x Absen Masuk & 1x Absen Pulang per Hari
     function murniCekAbsenHarian(namaPegawai, tipeAbsen) {
         let listAbsensi = JSON.parse(localStorage.getItem('absensi_p3k_v3')) || [];
         let hariIniStr = new Date().toLocaleDateString('id-ID');
@@ -205,19 +203,32 @@
         return true;
     }
 
-    // 4. Proses Simpan & Kirim
+    // Proses Absensi dengan Verifikasi PIN/NIP
     function prosesAbsensip3k() {
-        const nama = document.getElementById('nama').value;
-        const nip = document.getElementById('nip').value;
+        const select = document.getElementById("pegawaiSelect");
+        const nipBenar = select.value; 
+        const nipInput = document.getElementById("nip").value.trim(); 
+        const nama = document.getElementById("nama").value;
         const tipeAbsen = document.querySelector('input[name="tipeAbsen"]:checked').value;
         const status = document.getElementById('status').value;
 
-        if (!nama || !nip) {
+        if (!nama || !nipBenar) {
             alert("Silakan pilih Nama Pegawai terlebih dahulu!");
             return;
         }
 
-        // Cek Pembatasan 1x Absen
+        if (!nipInput) {
+            alert("Silakan ketik NIP / PIN Rahasia Anda!");
+            return;
+        }
+
+        // Cek apakah NIP/PIN yang diketik sesuai dengan nama yang dipilih
+        if (nipInput !== nipBenar) {
+            alert("NIP / PIN Rahasia SALAH! Silakan periksa kembali NIP Anda.");
+            return;
+        }
+
+        // Validasi 1x Absen per Hari
         if (!murniCekAbsenHarian(nama, tipeAbsen)) {
             return;
         }
@@ -235,14 +246,13 @@
             waktu: waktuSekarang,
             waktuIso: new Date().toISOString(),
             tipe: tipeAbsen,
-            nip: nip,
+            nip: nipInput,
             nama: nama,
             status: status,
             lokasi: userLokasi,
             foto: fotoDataUrl
         };
 
-        // Simpan Ke Local & Kirim Ke Google Sheets
         simpanKeGoogleSheets(dataBaru);
     }
 
