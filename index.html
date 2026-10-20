@@ -83,7 +83,7 @@
         <img src="logo%20sman7tangsel.jpeg" alt="Logo SMAN 7 Tangsel">
     </div>
 
-    <!-- FORMULIR ABSENSI (SEMBUNYI SAAT CETAK) -->
+    <!-- FORMULIR ABSENSI -->
     <div class="card-title no-print">
         <span><i class="fa-solid fa-pen-to-square"></i> Formulir Presensi Pegawai</span>
     </div>
@@ -92,18 +92,17 @@
         <div class="form-grid">
             <div class="form-group">
                 <label for="pegawaiSelect">Nama Lengkap Pegawai</label>
-                <!-- DAFTAR NAMA & NIP RESMI -->
                 <select id="pegawaiSelect" required onchange="resetNip()">
                     <option value="">-- Pilih Nama Anda --</option>
-                    <option value="198308222025212039" data-nama="Dinnar Mohammad Hasan">Dinnar Mohammad Hasan</option>
+                    <option value="196908222025212009" data-nama="Dinnar Mohammad Hasan">Dinnar Mohammad Hasan</option>
                     <option value="200111142025211015" data-nama="Mustakim">Mustakim</option>
-                    <option value="197512252025211050" data-nama="Nuradi Sumarna">Nuradi Sumarna</option>
-                    <option value="197805102025211106" data-nama="Wawan Setiawan">Wawan Setiawan</option>
-                    <option value="198301042025211088" data-nama="Asep nur">Asep nur</option>
-                    <option value="199710292025211048" data-nama="Hatta Amanu">Hatta Amanu</option>
-                    <option value="197006142025211030" data-nama="Sahari">Sahari</option>
-                    <option value="198401202025211096" data-nama="Yadik">Yadik</option>
-                    <option value="198101192025211059" data-nama="Suparyadi">Suparyadi</option>
+                    <option value="197512252025211050" data-nama="NURADI SUMARNA">NURADI SUMARNA</option>
+                    <option value="197805102025211108" data-nama="Wawan Setiawan">Wawan Setiawan</option>
+                    <option value="198108102025211008" data-nama="Asep nur">Asep nur</option>
+                    <option value="197109202025211048" data-nama="Hulla smamu">Hulla smamu</option>
+                    <option value="198305122025211009" data-nama="SAHARI">SAHARI</option>
+                    <option value="198402112025211005" data-nama="Yudik">Yudik</option>
+                    <option value="198506152025211007" data-nama="Suparyadi">Suparyadi</option>
                 </select>
             </div>
 
@@ -140,7 +139,6 @@
             </div>
         </div>
 
-        <!-- PRATINJAU KAMERA & GEOLOKASI -->
         <div class="camera-container">
             <video id="webcam" autoplay playsinline></video>
             <canvas id="canvas" style="display:none;"></canvas>
@@ -150,7 +148,7 @@
         <button type="button" class="btn-submit" onclick="prosesAbsensip3k()"><i class="fa-solid fa-camera"></i> Ambil Foto & Simpan Presensi</button>
     </form>
 
-    <!-- REKAPITULASI ABSENSI LOKAL PEGAWAI -->
+    <!-- REKAPITULASI ABSENSI -->
     <div class="table-responsive">
         <div class="card-title" style="margin-top: 20px;">
             <span><i class="fa-solid fa-list-check"></i> Rekapitulasi Absensi Pegawai</span>
@@ -186,7 +184,7 @@
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzQIAfpzAccgASNlDW4HdzfxwdIPCTNfCLRAOUTd0yUFKvy8fchHzkApBBTV3aLSGQUQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvzuZnKiDdDrVMHKKLnC2HK_JfhbjsuZd9rfZAhMWxLOIXnTiUEU1-rfEO-jIz1Fkseg/exec";
     
     let userLokasi = "Mencari Lokasi...";
     const video = document.getElementById('webcam');
@@ -284,13 +282,30 @@
             return;
         }
 
-        const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth || 320;
-        canvas.height = video.videoHeight || 240;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const fotoDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
         const waktuSekarang = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'medium' });
+
+        // CAPTURE KAMERA + MENGGAMBAR GEOTAG WATERMARK
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth || 480;
+        canvas.height = video.videoHeight || 640;
+        
+        // 1. Gambar objek kamera
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // 2. Buat Kotak Banner Hitam Transparan di Bawah Foto
+        const bannerHeight = 55;
+        context.fillStyle = "rgba(0, 0, 0, 0.7)";
+        context.fillRect(0, canvas.height - bannerHeight, canvas.width, bannerHeight);
+
+        // 3. Tuliskan Informasi Geotag di Atas Banner
+        context.fillStyle = "#ffffff";
+        context.font = "bold 13px Arial";
+        context.fillText(`[${tipeAbsen.toUpperCase()}] ${nama} (${nipInput})`, 12, canvas.height - 32);
+
+        context.font = "11px Arial";
+        context.fillText(`${waktuSekarang} | GPS: ${userLokasi} | SMAN 7 Tangsel`, 12, canvas.height - 12);
+
+        const fotoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
         const dataBaru = {
             waktu: waktuSekarang,
@@ -379,7 +394,6 @@
         }
     }
 
-    // FUNGSI MENCETAK REKAPITULASI KE PDF
     function cetakPDF() {
         window.print();
     }
