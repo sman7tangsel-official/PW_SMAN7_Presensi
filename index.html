@@ -192,7 +192,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSDanX4Zhm37VAH8Kf6iFCaHgLwmTMIRins0q6y7tH_21JckFqgt_EMDtAFrMKc3UeBg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwl5ef34aF_3SQJ1NcQiB77ohD5GdSiIrk1NxlDhSjvYcobdNADoTThCZU-sNH9Ubx6rg/exec";
 
     let rawAbsensiData = [];
 
@@ -204,7 +204,7 @@
     };
 
     function updateTanggalTtD() {
-      constsekarang = new Date();
+      const sekarang = new Date();
       const opsi = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' };
       document.getElementById('tglCetakTtD').innerText = sekarang.toLocaleDateString('id-ID', opsi);
     }
@@ -280,7 +280,7 @@
 
       const namaPegawaiAktif = document.getElementById('selectNama').value.trim();
 
-      // URUTAN KRONOLOGIS (Dari tanggal lama/bulan awal ke tanggal terbaru di bawah)
+      // Urutan Kronologis (Dari tanggal awal/bulan sebelumnya ke tanggal terbaru)
       let filtered = rawAbsensiData.slice(); 
       if (namaPegawaiAktif !== "") {
         filtered = filtered.filter(item => item.nama && item.nama.toLowerCase() === namaPegawaiAktif.toLowerCase());
