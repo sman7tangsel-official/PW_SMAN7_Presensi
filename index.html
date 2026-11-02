@@ -15,25 +15,32 @@
     .logo-img { height: 65px; width: auto; object-fit: contain; }
     .img-geotag { width: 55px; height: 55px; object-fit: cover; border-radius: 4px; border: 1px solid #000; }
     
-    /* Area Tanda Tangan */
     .ttd-container { display: none; margin-top: 30px; page-break-inside: avoid; }
     
-    /* CSS Khusus Format Cetak / PDF */
+    /* CSS Khusus Format Cetak / PDF Multi-Halaman */
+    @page {
+      margin: 10mm 12mm 10mm 12mm; /* Menghilangkan header bawaan browser */
+    }
+
     @media print {
       .no-print, .btn, form, .input-group, select, input { display: none !important; }
       body { background-color: #ffffff !important; font-size: 11px !important; color: #000 !important; }
       .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
       .card { border: none !important; box-shadow: none !important; background: transparent !important; }
       .card-header { background: transparent !important; border: none !important; padding: 5px 0 !important; }
-      #judulTabelRekap { font-size: 14px !important; font-weight: bold !important; text-align: center !important; margin-bottom: 10px !important; display: block !important; }
+      
+      /* Menyulang Kop Sekolah di Setiap Halaman */
+      thead.header-cetak-per-halaman { display: table-header-group !important; }
+      
+      #judulTabelRekap { font-size: 13px !important; font-weight: bold !important; text-align: center !important; margin-top: 8px !important; margin-bottom: 8px !important; display: block !important; }
       
       /* Format Tabel Bergaris Hitam Tegas */
       .table-responsive { overflow: visible !important; }
       table.table-cetak { width: 100% !important; border-collapse: collapse !important; border: 1.5px solid #000 !important; }
-      table.table-cetak th, table.table-cetak td { border: 1px solid #000 !important; padding: 4px 6px !important; color: #000 !important; vertical-align: middle !important; text-align: center !important; }
-      table.table-cetak thead th { background-color: #f2f2f2 !important; font-weight: bold !important; text-transform: uppercase !important; border-bottom: 1.5px solid #000 !important; }
+      table.table-cetak th, table.table-cetak td { border: 1px solid #000 !important; padding: 4px 5px !important; color: #000 !important; vertical-align: middle !important; text-align: center !important; }
+      table.table-cetak tr { page-break-inside: avoid !important; }
       .badge { border: none !important; color: #000 !important; background: transparent !important; font-weight: normal !important; padding: 0 !important; }
-      .img-geotag { width: 45px !important; height: 45px !important; border: 1px solid #000 !important; }
+      .img-geotag { width: 42px !important; height: 42px !important; border: 1px solid #000 !important; }
 
       /* Tanda Tangan Kepala Sekolah */
       .ttd-container { display: flex !important; justify-content: flex-end !important; margin-top: 25px !important; }
@@ -44,8 +51,8 @@
 <body>
 
   <div class="container my-4">
-    <!-- Header Branding -->
-    <div class="card mb-4 shadow-sm">
+    <!-- Header Branding di Tampilan Web -->
+    <div class="card mb-4 shadow-sm no-print">
       <div class="card-body text-center">
         <div class="d-flex justify-content-between align-items-center">
           <img id="imgLogoBanten" class="logo-img" alt="Logo Banten" src="./logo banten.jpeg">
@@ -83,7 +90,6 @@
               </select>
             </div>
 
-            <!-- PIN / NIP Manual Dengan Tombol Mata -->
             <div class="col-md-4">
               <label class="form-label fw-bold">Masukkan NIP / PIN Rahasia</label>
               <div class="input-group">
@@ -102,7 +108,6 @@
               </select>
             </div>
 
-            <!-- Kamera & Lokasi -->
             <div class="col-md-6 text-center my-3">
               <label class="form-label fw-bold d-block">Pratinjau Kamera</label>
               <video id="webcam" autoplay playsinline></video>
@@ -119,7 +124,6 @@
               <button type="button" class="btn btn-sm btn-outline-primary w-50" onclick="dapatkanLokasi()">📍 Update Lokasi GPS</button>
             </div>
 
-            <!-- Tombol SIMPAN Utama -->
             <div class="col-12 text-center">
               <button type="submit" class="btn btn-primary fw-bold px-5 py-2 w-100" id="btnSubmit">📷 Ambil Foto & Simpan Presensi Ke Spreadsheet</button>
             </div>
@@ -130,10 +134,10 @@
 
     <!-- Area Rekapitulasi Riwayat Absensi Pegawai -->
     <div class="card shadow-sm">
-      <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h6 class="fw-bold mb-0 text-dark" id="judulTabelRekap">📜 Riwayat Absensi Pegawai</h6>
+      <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2 no-print">
+        <h6 class="fw-bold mb-0 text-dark">📜 Riwayat Absensi Pegawai</h6>
         
-        <div class="d-flex align-items-center gap-2 flex-wrap ms-auto no-print">
+        <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
           <select id="filterTipe" class="form-select form-select-sm" style="width: auto;" onchange="filterTabelAbsensi()">
             <option value="">Semua Tipe</option>
             <option value="Absen Masuk">Absen Masuk</option>
@@ -154,8 +158,24 @@
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-striped table-hover table-cetak align-middle mb-0 text-center" id="tabelAbsensi">
-            <thead class="table-dark">
-              <tr>
+            
+            <!-- Header khusus Cetak (Kop Sekolah & Baris Judul Kolom di Setiap Halaman) -->
+            <thead class="header-cetak-per-halaman">
+              <tr class="d-none d-print-table-row border-0">
+                <th colspan="8" class="border-0 bg-transparent pb-3">
+                  <div class="d-flex justify-content-between align-items-center text-center">
+                    <img class="logo-img" alt="Logo Banten" src="./logo banten.jpeg">
+                    <div>
+                      <h6 class="fw-bold mb-0" style="font-size: 13px;">PEMERINTAH PROVINSI BANTEN</h6>
+                      <h5 class="fw-bold text-dark mb-0" style="font-size: 15px;">SMAN 7 KOTA TANGERANG SELATAN</h5>
+                      <small class="text-muted" style="font-size: 10px;">Sistem Absensi Kehadiran P3K Paruh Waktu</small>
+                    </div>
+                    <img class="logo-img" alt="Logo Sekolah" src="./logo sman7tangsel.jpeg">
+                  </div>
+                  <div class="fw-bold mt-2 text-center" id="judulTabelRekap">Riwayat Absensi Pegawai</div>
+                </th>
+              </tr>
+              <tr class="table-dark">
                 <th style="width: 5%;">NO</th>
                 <th style="width: 22%;">TANGGAL & WAKTU</th>
                 <th style="width: 11%;">TIPE</th>
@@ -166,6 +186,7 @@
                 <th style="width: 10%;">FOTO GEOTAG</th>
               </tr>
             </thead>
+
             <tbody id="bodyTabelAbsensi">
               <tr>
                 <td colspan="8" class="text-muted py-4">Memuat data absensi...</td>
@@ -192,7 +213,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwl5ef34aF_3SQJ1NcQiB77ohD5GdSiIrk1NxlDhSjvYcobdNADoTThCZU-sNH9Ubx6rg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxdrJiCN5nFC6A1m7TRz3z-eEo5w3DWJubZ2LyqCQT-dNt-D-UkmUkCt8Bgrs8cccjMw/exec";
 
     let rawAbsensiData = [];
 
