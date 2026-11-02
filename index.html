@@ -15,7 +15,10 @@
     .logo-img { height: 65px; width: auto; object-fit: contain; }
     .img-geotag { width: 55px; height: 55px; object-fit: cover; border-radius: 4px; border: 1px solid #000; }
     
-    /* CSS Khusus Format Cetak / PDF (Persis Tampilan Lama) */
+    /* Area Tanda Tangan (Sembunyi di Layar Web biasa) */
+    .ttd-container { display: none; margin-top: 30px; page-break-inside: avoid; }
+    
+    /* CSS Khusus Format Cetak / PDF */
     @media print {
       .no-print, .btn, form, .input-group, select, input { display: none !important; }
       body { background-color: #ffffff !important; font-size: 11px !important; color: #000 !important; }
@@ -31,6 +34,10 @@
       table.table-cetak thead th { background-color: #f2f2f2 !important; font-weight: bold !important; text-transform: uppercase !important; border-bottom: 1.5px solid #000 !important; }
       .badge { border: none !important; color: #000 !important; background: transparent !important; font-weight: normal !important; padding: 0 !important; }
       .img-geotag { width: 45px !important; height: 45px !important; border: 1px solid #000 !important; }
+
+      /* Menampilkan Tanda Tangan Kepala Sekolah Saat Cetak */
+      .ttd-container { display: flex !important; justify-content: flex-end !important; margin-top: 25px !important; }
+      .ttd-box { width: 280px; text-align: left; font-size: 11px; color: #000; }
     }
   </style>
 </head>
@@ -166,12 +173,26 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Blok Tanda Tangan Kepala Sekolah (Muncul Saat Cetak) -->
+        <div class="ttd-container">
+          <div class="ttd-box">
+            <div>Ditetapkan : Tangerang Selatan</div>
+            <div>Pada tanggal : <span id="tglCetakTtD">23 Oktober 2026</span></div>
+            <div class="mt-2">Kepala,</div>
+            <br><br><br>
+            <div class="fw-bold text-decoration-underline">Muhaji Joko Tingkir, S.Pd, M.Si</div>
+            <div>Pembina Tk I, IV/b</div>
+            <div>NIP. 197107232005011005</div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbynsbP0yToyIaa1jFNx2jQ-6okTtCdr8y5ZNBGKjnsV4QRgSJF_0NsOIlFZezg_AjOrkg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwk4KsyWRrVUivj3TDMWo5qM-ZHnxpMkk6Nicr0o8SMo9QiazJ3ADXjbhk4d0tge1nWA/exec";
 
     let rawAbsensiData = [];
 
@@ -247,7 +268,6 @@
 
       const namaPegawaiAktif = document.getElementById('selectNama').value.trim();
 
-      // Filter khusus nama pegawai jika sudah memilih di dropdown
       let filtered = rawAbsensiData.slice().reverse();
       if (namaPegawaiAktif !== "") {
         filtered = filtered.filter(item => item.nama && item.nama.toLowerCase() === namaPegawaiAktif.toLowerCase());
