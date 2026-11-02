@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Absensi P3K PW SMAN 7 Tangerang Selatan</title>
-  <!-- Bootstrap 5 CSS -->
+  <!-- Bootstrap 5 CSS & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     body { background-color: #f8f9fa; }
     .card-header-custom { background-color: #ffffff; border-bottom: 2px solid #0d6efd; }
@@ -61,10 +62,15 @@
               </select>
             </div>
 
-            <!-- PIN / NIP Manual -->
+            <!-- PIN / NIP Manual Dengan Tombol Mata Intip -->
             <div class="col-md-4">
               <label class="form-label fw-bold">Masukkan NIP / PIN Rahasia</label>
-              <input type="password" id="inputNIP" class="form-control" required placeholder="Ketik NIP Anda di sini...">
+              <div class="input-group">
+                <input type="password" id="inputNIP" class="form-control" required placeholder="Ketik NIP Anda di sini...">
+                <button class="btn btn-outline-secondary" type="button" onclick="togglePIN()">
+                  <i class="bi bi-eye" id="iconMata"></i>
+                </button>
+              </div>
             </div>
 
             <div class="col-md-3">
@@ -100,20 +106,18 @@
       </div>
     </div>
 
-    <!-- Area Rekapitulasi Absensi Pegawai dengan Pilihan Rentang Tanggal Laporan -->
+    <!-- Area Rekapitulasi Absensi Pegawai -->
     <div class="card shadow-sm">
       <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h6 class="fw-bold mb-0 text-dark">📜 Rekapitulasi Absensi Pegawai</h6>
         
         <div class="d-flex align-items-center gap-2 flex-wrap ms-auto no-print">
-          <!-- Filter Dropdown Tipe -->
           <select id="filterTipe" class="form-select form-select-sm" style="width: auto;" onchange="filterTabelAbsensi()">
             <option value="">Semua Tipe</option>
             <option value="Absen Masuk">Absen Masuk</option>
             <option value="Absen Pulang">Absen Pulang</option>
           </select>
 
-          <!-- Input Rentang Tanggal Laporan -->
           <span class="small fw-bold">Dari:</span>
           <input type="date" id="filterDari" class="form-control form-control-sm" style="width: auto;" onchange="filterTabelAbsensi()">
           
@@ -153,13 +157,26 @@
 
   <script>
     // MASUKKAN URL GOOGLE APPS SCRIPT WEB APP ANDA DI SINI
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiXpmCubW9tMlFCNh-Rs61Ar4-daqRLJAW-N8PE7WpJ1vJ8dTanvVJFqbDboKoTSZDtA/exec";
+    const SCRIPT_URL = "URL_WEB_APP_APPS_SCRIPT_ANDA";
 
     window.onload = function() {
       mulaiKamera();
       dapatkanLokasi();
       muatDataAbsensi();
     };
+
+    // Fungsi Intip / Sembunyikan PIN (Tombol Mata)
+    function togglePIN() {
+      const input = document.getElementById('inputNIP');
+      const icon = document.getElementById('iconMata');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+      }
+    }
 
     function mulaiKamera() {
       const constraints = {
@@ -276,7 +293,6 @@
       });
     }
 
-    // Fungsi Penyaringan Rentang Tanggal dan Tipe Absensi
     function filterTabelAbsensi() {
       const tipe = document.getElementById('filterTipe').value.toLowerCase();
       const dariVal = document.getElementById('filterDari').value;
@@ -290,13 +306,12 @@
         if (row.children.length < 8) return;
         
         const rowTipe = row.children[2].innerText.toLowerCase();
-        const rowWaktuText = row.children[1].innerText; // Contoh: "Jumat, 16 Oktober 2026 pukul 17.01.59"
+        const rowWaktuText = row.children[1].innerText;
         
         let matchTipe = !tipe || rowTipe.includes(tipe);
         let matchTanggal = true;
 
         if (dariDate || sampaiDate) {
-          // Ekstrak angka tanggal, bulan, dan tahun dari teks waktu
           const dateMatch = rowWaktuText.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
           if (dateMatch) {
             const day = parseInt(dateMatch[1]);
