@@ -19,7 +19,7 @@
     
     /* CSS Khusus Format Cetak / PDF Multi-Halaman */
     @page {
-      margin: 10mm 12mm 10mm 12mm; /* Menghilangkan header bawaan browser */
+      margin: 10mm 12mm 10mm 12mm;
     }
 
     @media print {
@@ -29,12 +29,10 @@
       .card { border: none !important; box-shadow: none !important; background: transparent !important; }
       .card-header { background: transparent !important; border: none !important; padding: 5px 0 !important; }
       
-      /* Menyulang Kop Sekolah di Setiap Halaman */
       thead.header-cetak-per-halaman { display: table-header-group !important; }
       
       #judulTabelRekap { font-size: 13px !important; font-weight: bold !important; text-align: center !important; margin-top: 8px !important; margin-bottom: 8px !important; display: block !important; }
       
-      /* Format Tabel Bergaris Hitam Tegas */
       .table-responsive { overflow: visible !important; }
       table.table-cetak { width: 100% !important; border-collapse: collapse !important; border: 1.5px solid #000 !important; }
       table.table-cetak th, table.table-cetak td { border: 1px solid #000 !important; padding: 4px 5px !important; color: #000 !important; vertical-align: middle !important; text-align: center !important; }
@@ -42,7 +40,6 @@
       .badge { border: none !important; color: #000 !important; background: transparent !important; font-weight: normal !important; padding: 0 !important; }
       .img-geotag { width: 42px !important; height: 42px !important; border: 1px solid #000 !important; }
 
-      /* Tanda Tangan Kepala Sekolah */
       .ttd-container { display: flex !important; justify-content: flex-end !important; margin-top: 25px !important; }
       .ttd-box { width: 280px; text-align: left; font-size: 11px; color: #000; }
     }
@@ -68,15 +65,16 @@
 
     <!-- Form Presensi Kehadiran Pegawai -->
     <div class="card mb-4 shadow-sm no-print">
-      <div class="card-header bg-primary text-white">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h6 class="fw-bold mb-0">📝 Formulir Presensi Pegawai</h6>
+        <span id="statusVerifikasi" class="badge bg-warning text-dark">🔐 Masukkan NIP / PIN</span>
       </div>
       <div class="card-body">
         <form id="formAbsensi" onsubmit="kirimAbsensi(event)">
           <div class="row g-3">
             <div class="col-md-5">
               <label class="form-label fw-bold">Nama Lengkap Pegawai</label>
-              <select id="selectNama" class="form-select" required onchange="filterTabelPegawaiAktif()">
+              <select id="selectNama" class="form-select" required onchange="resetVerifikasiPIN()">
                 <option value="">-- Pilih Nama Anda --</option>
                 <option value="Dinnar Mohammad Hasan" data-nip="198308222025212039">Dinnar Mohammad Hasan</option>
                 <option value="Mustakim" data-nip="200111142025211015">Mustakim</option>
@@ -90,10 +88,11 @@
               </select>
             </div>
 
+            <!-- PIN / NIP Manual Dengan Tombol Verifikasi -->
             <div class="col-md-4">
               <label class="form-label fw-bold">Masukkan NIP / PIN Rahasia</label>
               <div class="input-group">
-                <input type="password" id="inputNIP" class="form-control" required placeholder="Ketik NIP Anda di sini...">
+                <input type="password" id="inputNIP" class="form-control" required placeholder="Ketik NIP Anda..." oninput="verifikasiPIN()">
                 <button class="btn btn-outline-secondary" type="button" onclick="togglePIN()">
                   <i class="bi bi-eye" id="iconMata"></i>
                 </button>
@@ -125,7 +124,7 @@
             </div>
 
             <div class="col-12 text-center">
-              <button type="submit" class="btn btn-primary fw-bold px-5 py-2 w-100" id="btnSubmit">📷 Ambil Foto & Simpan Presensi Ke Spreadsheet</button>
+              <button type="submit" class="btn btn-primary fw-bold px-5 py-2 w-100" id="btnSubmit" disabled>📷 Masukkan PIN / NIP Yang Benar Untuk Presensi</button>
             </div>
           </div>
         </form>
@@ -135,7 +134,7 @@
     <!-- Area Rekapitulasi Riwayat Absensi Pegawai -->
     <div class="card shadow-sm">
       <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2 no-print">
-        <h6 class="fw-bold mb-0 text-dark">📜 Riwayat Absensi Pegawai</h6>
+        <h6 class="fw-bold mb-0 text-dark" id="judulTabelRekap">📜 Riwayat Absensi Pegawai</h6>
         
         <div class="d-flex align-items-center gap-2 flex-wrap ms-auto">
           <select id="filterTipe" class="form-select form-select-sm" style="width: auto;" onchange="filterTabelAbsensi()">
@@ -159,7 +158,7 @@
         <div class="table-responsive">
           <table class="table table-striped table-hover table-cetak align-middle mb-0 text-center" id="tabelAbsensi">
             
-            <!-- Header khusus Cetak (Kop Sekolah & Baris Judul Kolom di Setiap Halaman) -->
+            <!-- Header cetak -->
             <thead class="header-cetak-per-halaman">
               <tr class="d-none d-print-table-row border-0">
                 <th colspan="8" class="border-0 bg-transparent pb-3">
@@ -172,7 +171,7 @@
                     </div>
                     <img class="logo-img" alt="Logo Sekolah" src="./logo sman7tangsel.jpeg">
                   </div>
-                  <div class="fw-bold mt-2 text-center" id="judulTabelRekap">Riwayat Absensi Pegawai</div>
+                  <div class="fw-bold mt-2 text-center" id="judulTabelRekapCetak">Riwayat Absensi Pegawai</div>
                 </th>
               </tr>
               <tr class="table-dark">
@@ -189,13 +188,13 @@
 
             <tbody id="bodyTabelAbsensi">
               <tr>
-                <td colspan="8" class="text-muted py-4">Memuat data absensi...</td>
+                <td colspan="8" class="text-muted py-4">Silakan pilih nama dan masukkan NIP/PIN rahasia untuk melihat data...</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Blok Tanda Tangan Kepala Sekolah -->
+        <!-- Tanda tangan Kepala Sekolah -->
         <div class="ttd-container">
           <div class="ttd-box">
             <div>Ditetapkan : Tangerang Selatan</div>
@@ -213,9 +212,10 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxdrJiCN5nFC6A1m7TRz3z-eEo5w3DWJubZ2LyqCQT-dNt-D-UkmUkCt8Bgrs8cccjMw/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjSbl880ky9122mzFGW3poGMF6u4_Uex_0OGNXRXnE_PxfWLHccN249vOEYORhD7dilw/exec";
 
     let rawAbsensiData = [];
+    let isPinVerified = false;
 
     window.onload = function() {
       mulaiKamera();
@@ -223,6 +223,47 @@
       muatDataAbsensi();
       updateTanggalTtD();
     };
+
+    function resetVerifikasiPIN() {
+      document.getElementById('inputNIP').value = '';
+      verifikasiPIN();
+    }
+
+    // Fungsi Verifikasi PIN/NIP Real-Time
+    function verifikasiPIN() {
+      const selectNama = document.getElementById('selectNama');
+      const inputNIP = document.getElementById('inputNIP').value.trim();
+      const statusBadge = document.getElementById('statusVerifikasi');
+      const btnSubmit = document.getElementById('btnSubmit');
+
+      if (selectNama.value === "") {
+        statusBadge.className = "badge bg-warning text-dark";
+        statusBadge.innerText = "🔐 Pilih Nama Pegawai";
+        btnSubmit.disabled = true;
+        btnSubmit.innerText = "📷 Pilih Nama Pegawai Terlebih Dahulu";
+        isPinVerified = false;
+        tampilkanTabelAbsensi();
+        return;
+      }
+
+      const nipValid = selectNama.options[selectNama.selectedIndex].getAttribute('data-nip');
+
+      if (inputNIP === nipValid) {
+        statusBadge.className = "badge bg-success";
+        statusBadge.innerText = "✅ PIN Valid / Terverifikasi";
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = "📷 Ambil Foto & Simpan Presensi Ke Spreadsheet";
+        isPinVerified = true;
+      } else {
+        statusBadge.className = "badge bg-danger";
+        statusBadge.innerText = "❌ PIN / NIP Salah";
+        btnSubmit.disabled = true;
+        btnSubmit.innerText = "📷 Masukkan PIN / NIP Yang Benar Untuk Presensi";
+        isPinVerified = false;
+      }
+
+      tampilkanTabelAbsensi();
+    }
 
     function updateTanggalTtD() {
       const sekarang = new Date();
@@ -293,22 +334,26 @@
     function tampilkanTabelAbsensi() {
       const tbody = document.getElementById('bodyTabelAbsensi');
       tbody.innerHTML = '';
-      
-      if (!rawAbsensiData || rawAbsensiData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada data absensi.</td></tr>';
-        return;
-      }
 
       const namaPegawaiAktif = document.getElementById('selectNama').value.trim();
 
-      // Urutan Kronologis (Dari tanggal awal/bulan sebelumnya ke tanggal terbaru)
-      let filtered = rawAbsensiData.slice(); 
-      if (namaPegawaiAktif !== "") {
-        filtered = filtered.filter(item => item.nama && item.nama.toLowerCase() === namaPegawaiAktif.toLowerCase());
-        document.getElementById('judulTabelRekap').innerText = `Riwayat Absensi: ${namaPegawaiAktif}`;
-      } else {
-        document.getElementById('judulTabelRekap').innerText = `Riwayat Absensi Seluruh Pegawai`;
+      // Jika PIN Belum Terverifikasi, Sembunyikan Data Privat
+      if (!isPinVerified || namaPegawaiAktif === "") {
+        document.getElementById('judulTabelRekap').innerText = `📜 Riwayat Absensi Pegawai (Terkunci 🔒)`;
+        if(document.getElementById('judulTabelRekapCetak')) {
+          document.getElementById('judulTabelRekapCetak').innerText = `Riwayat Absensi Pegawai`;
+        }
+        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">🔒 Silakan pilih Nama dan ketik PIN/NIP yang benar untuk membuka riwayat absensi.</td></tr>';
+        return;
       }
+
+      document.getElementById('judulTabelRekap').innerText = `📜 Riwayat Absensi: ${namaPegawaiAktif}`;
+      if(document.getElementById('judulTabelRekapCetak')) {
+        document.getElementById('judulTabelRekapCetak').innerText = `Riwayat Absensi: ${namaPegawaiAktif}`;
+      }
+
+      // Filter Khusus Pegawai Yang Sedang Terverifikasi PIN-nya
+      let filtered = rawAbsensiData.slice().filter(item => item.nama && item.nama.toLowerCase() === namaPegawaiAktif.toLowerCase());
 
       if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada riwayat absensi untuk pegawai ini.</td></tr>';
@@ -344,10 +389,6 @@
       });
 
       filterTabelAbsensi();
-    }
-
-    function filterTabelPegawaiAktif() {
-      tampilkanTabelAbsensi();
     }
 
     function checkSudahAbsenHariIni(nama, tipe) {
@@ -405,15 +446,14 @@
         alert(`✅ Presensi ${tipeVal} BERHASIL disimpan!`);
         document.getElementById('inputNIP').value = '';
         document.getElementById('fotoBase64').value = '';
-        btn.disabled = false;
-        btn.innerText = "📷 Ambil Foto & Simpan Presensi Ke Spreadsheet";
+        verifikasiPIN();
         setTimeout(muatDataAbsensi, 1500);
       })
       .catch(() => {
         alert(`✅ Presensi ${tipeVal} BERHASIL disimpan!`);
         document.getElementById('inputNIP').value = '';
-        btn.disabled = false;
-        btn.innerText = "📷 Ambil Foto & Simpan Presensi Ke Spreadsheet";
+        document.getElementById('fotoBase64').value = '';
+        verifikasiPIN();
         setTimeout(muatDataAbsensi, 1500);
       });
     }
