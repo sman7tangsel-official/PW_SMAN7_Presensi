@@ -13,6 +13,8 @@
     #webcam { width: 100%; max-width: 400px; height: auto; border-radius: 8px; border: 2px solid #dee2e6; }
     #canvas { display: none; }
     .logo-img { height: 65px; width: auto; object-fit: contain; }
+    .img-geotag { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #ddd; transition: transform 0.2s; }
+    .img-geotag:hover { transform: scale(1.1); }
     @media print {
       .no-print { display: none !important; }
       .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
@@ -48,7 +50,7 @@
           <div class="row g-3">
             <div class="col-md-5">
               <label class="form-label fw-bold">Nama Lengkap Pegawai</label>
-              <select id="selectNama" class="form-select" required>
+              <select id="selectNama" class="form-select" required onchange="filterTabelPegawaiAktif()">
                 <option value="">-- Pilih Nama Anda --</option>
                 <option value="Dinnar Mohammad Hasan" data-nip="198308222025212039">Dinnar Mohammad Hasan</option>
                 <option value="Mustakim" data-nip="200111142025211015">Mustakim</option>
@@ -107,10 +109,10 @@
       </div>
     </div>
 
-    <!-- Area Rekapitulasi Absensi Pegawai -->
+    <!-- Area Rekapitulasi Riwayat Absensi Pegawai -->
     <div class="card shadow-sm">
       <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h6 class="fw-bold mb-0 text-dark">📜 Rekapitulasi Absensi Pegawai</h6>
+        <h6 class="fw-bold mb-0 text-dark" id="judulTabelRekap">📜 Riwayat Absensi Pegawai</h6>
         
         <div class="d-flex align-items-center gap-2 flex-wrap ms-auto no-print">
           <select id="filterTipe" class="form-select form-select-sm" style="width: auto;" onchange="filterTabelAbsensi()">
@@ -157,8 +159,9 @@
   </div>
 
   <script>
-    // PASTE URL HASIL PUBLISH APPS SCRIPT BARU DI SINI
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrd5QBr_RodqA-c8OnTZ0nBKuN-Zgro0kIbsGPffSmCTfX2tYx-yTspFkeHTilyeJ-4A/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFWH0vdEihM7QmC-7zFmXC2005yx2AGXnbnv6Ngpg0LJzDPNVMzVES1ojz9u8aYoS_Kw/exec";
+
+    let rawAbsensiData = [];
 
     window.onload = function() {
       mulaiKamera();
@@ -212,42 +215,108 @@
       fetch(SCRIPT_URL + "?action=read")
         .then(res => res.json())
         .then(data => {
-          const tbody = document.getElementById('bodyTabelAbsensi');
-          tbody.innerHTML = '';
-          if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada data absensi.</td></tr>';
-            return;
-          }
-          // Tampilkan baris absensi terbaru di paling atas
-          data.slice().reverse().forEach((row, i) => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${i + 1}</td>
-              <td>${row.waktu || '-'}</td>
-              <td>${row.tipe || '-'}</td>
-              <td>${row.nip || '-'}</td>
-              <td>${row.nama || '-'}</td>
-              <td><span class="badge bg-success">Hadir</span></td>
-              <td>${row.lokasi || '-'}</td>
-              <td>${row.linkFoto && row.linkFoto.includes('http') ? `<a href="${row.linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">Lihat Foto</a>` : '-'}</td>
-            `;
-            tbody.appendChild(tr);
-          });
+          rawAbsensiData = data || [];
+          tampilkanTabelAbsensi();
         })
         .catch(err => {
           console.error("Gagal muat data:", err);
-          document.getElementById('bodyTabelAbsensi').innerHTML = '<tr><td colspan="8" class="text-muted py-4">Gagal memuat data dari spreadsheet. Pastikan hak akses Apps Script adalah Siapa Saja (Anyone).</td></tr>';
+          document.getElementById('bodyTabelAbsensi').innerHTML = '<tr><td colspan="8" class="text-muted py-4">Gagal memuat data dari spreadsheet.</td></tr>';
         });
+    }
+
+    function tampilkanTabelAbsensi() {
+      const tbody = document.getElementById('bodyTabelAbsensi');
+      tbody.innerHTML = '';
+      
+      if (!rawAbsensiData || rawAbsensiData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada data absensi.</td></tr>';
+        return;
+      }
+
+      const namaPegawaiAktif = document.getElementById('selectNama').value.trim();
+
+      // Filter khusus nama pegawai jika sudah memilih di dropdown
+      let filtered = rawAbsensiData.slice().reverse();
+      if (namaPegawaiAktif !== "") {
+        filtered = filtered.filter(item => item.nama && item.nama.toLowerCase() === namaPegawaiAktif.toLowerCase());
+        document.getElementById('judulTabelRekap').innerText = `📜 Riwayat Absensi: ${namaPegawaiAktif}`;
+      } else {
+        document.getElementById('judulTabelRekap').innerText = `📜 Riwayat Absensi Seluruh Pegawai`;
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada riwayat absensi untuk pegawai ini.</td></tr>';
+        return;
+      }
+
+      filtered.forEach((row, i) => {
+        let tr = document.createElement('tr');
+        
+        // Konversi Link Foto ke Elemen Tampilan Gambar Langsung (Thumbnail)
+        let elementFoto = '-';
+        if (row.linkFoto && row.linkFoto.includes('http')) {
+          // Ekstrak ID dari URL Google Drive View
+          let match = row.linkFoto.match(/\/d\/([^\/]+)/);
+          if (match && match[1]) {
+            let fileId = match[1];
+            let directImgUrl = `https://lh3.googleusercontent.com/d/${fileId}=s200`;
+            elementFoto = `<a href="${row.linkFoto}" target="_blank" title="Klik untuk memperbesar"><img src="${directImgUrl}" class="img-geotag" alt="Foto Geotag" onerror="this.onerror=null; this.src='https://via.placeholder.com/60?text=Foto';"></a>`;
+          } else {
+            elementFoto = `<a href="${row.linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">Lihat Foto</a>`;
+          }
+        }
+
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${row.waktu || '-'}</td>
+          <td>${row.tipe || '-'}</td>
+          <td>${row.nip || '-'}</td>
+          <td>${row.nama || '-'}</td>
+          <td><span class="badge bg-success">Hadir</span></td>
+          <td>${row.lokasi || '-'}</td>
+          <td>${elementFoto}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      filterTabelAbsensi();
+    }
+
+    function filterTabelPegawaiAktif() {
+      tampilkanTabelAbsensi();
+    }
+
+    function checkSudahAbsenHariIni(nama, tipe) {
+      const sekarang = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' };
+      const tanggalHariIniText = sekarang.toLocaleDateString('id-ID', options);
+
+      return rawAbsensiData.some(row => {
+        if (!row.nama || !row.waktu || !row.tipe) return false;
+        const matchNama = row.nama.toLowerCase() === nama.toLowerCase();
+        const matchTipe = row.tipe.toLowerCase() === tipe.toLowerCase();
+        const matchTanggal = row.waktu.toLowerCase().includes(tanggalHariIniText.toLowerCase());
+        return matchNama && matchTipe && matchTanggal;
+      });
     }
 
     function kirimAbsensi(e) {
       e.preventDefault();
       const selectNama = document.getElementById('selectNama');
+      const namaVal = selectNama.value;
       const nipValid = selectNama.options[selectNama.selectedIndex].getAttribute('data-nip');
       const nipInput = document.getElementById('inputNIP').value.trim();
+      const tipeVal = document.getElementById('selectTipe').value;
 
+      // 1. Validasi PIN / NIP
       if (nipInput !== nipValid) {
         alert("❌ PIN / NIP yang Anda masukkan salah untuk pegawai ini!");
+        return;
+      }
+
+      // 2. Validasi Pembatasan 1x Akses per Hari untuk Masuk/Pulang
+      if (checkSudahAbsenHariIni(namaVal, tipeVal)) {
+        alert(`⚠️ Anda (${namaVal}) sudah melakukan ${tipeVal.toUpperCase()} untuk hari ini!\nAbsensi hanya diperbolehkan 1 kali per tipe absensi setiap hari.`);
         return;
       }
 
@@ -257,9 +326,9 @@
       btn.innerText = "⏳ Menyimpan Ke Google Spreadsheet...";
 
       const payload = {
-        nama: selectNama.value,
+        nama: namaVal,
         nip: nipInput,
-        tipe: document.getElementById('selectTipe').value,
+        tipe: tipeVal,
         lokasi: document.getElementById('inputLokasi').value,
         foto: fotoData
       };
@@ -271,7 +340,7 @@
         body: JSON.stringify(payload)
       })
       .then(() => {
-        alert("✅ Presensi BERHASIL disimpan ke Google Spreadsheet!");
+        alert(`✅ Presensi ${tipeVal} BERHASIL disimpan!`);
         document.getElementById('inputNIP').value = '';
         document.getElementById('fotoBase64').value = '';
         btn.disabled = false;
@@ -279,7 +348,7 @@
         setTimeout(muatDataAbsensi, 1500);
       })
       .catch(() => {
-        alert("✅ Presensi BERHASIL disimpan!");
+        alert(`✅ Presensi ${tipeVal} BERHASIL disimpan!`);
         document.getElementById('inputNIP').value = '';
         btn.disabled = false;
         btn.innerText = "📷 Ambil Foto & Simpan Presensi Ke Spreadsheet";
