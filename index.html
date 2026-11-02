@@ -11,6 +11,7 @@
     .card-header-custom { background-color: #ffffff; border-bottom: 2px solid #0d6efd; }
     #webcam { width: 100%; max-width: 400px; height: auto; border-radius: 8px; border: 2px solid #dee2e6; }
     #canvas { display: none; }
+    .logo-img { height: 60px; width: auto; object-fit: contain; }
     @media print {
       .no-print { display: none !important; }
       .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
@@ -21,17 +22,17 @@
 <body>
 
   <div class="container my-4">
-    <!-- Header Branding -->
+    <!-- Header Branding dengan Logo Base64 -->
     <div class="card mb-4 shadow-sm">
       <div class="card-body text-center">
         <div class="d-flex justify-content-between align-items-center">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Logo_Provinsi_Banten.png/1200px-Logo_Provinsi_Banten.png" alt="Logo Banten" style="height: 60px;">
+          <img id="imgLogoBanten" class="logo-img" alt="Logo Banten" src="">
           <div>
             <h5 class="fw-bold mb-0">PEMERINTAH PROVINSI BANTEN</h5>
             <h4 class="fw-bold text-primary mb-0">SMAN 7 KOTA TANGERANG SELATAN</h4>
             <small class="text-muted">Sistem Absensi Kehadiran P3K Paruh Waktu</small>
           </div>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Logo_Kota_Tangerang_Selatan.png/1200px-Logo_Kota_Tangerang_Selatan.png" alt="Logo Tangsel" style="height: 60px;">
+          <img id="imgLogoSekolah" class="logo-img" alt="Logo Sekolah" src="">
         </div>
       </div>
     </div>
@@ -44,9 +45,9 @@
       <div class="card-body">
         <form id="formAbsensi" onsubmit="kirimAbsensi(event)">
           <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-5">
               <label class="form-label fw-bold">Pilih Nama Pegawai</label>
-              <select id="selectNama" class="form-select" required onchange="isiNIPAuto()">
+              <select id="selectNama" class="form-select" required>
                 <option value="">-- Pilih Pegawai --</option>
                 <option value="Dinnar Mohammad Hasan" data-nip="198308222025212039">Dinnar Mohammad Hasan</option>
                 <option value="Mustakim" data-nip="200111142025211015">Mustakim</option>
@@ -60,9 +61,10 @@
               </select>
             </div>
 
-            <div class="col-md-3">
-              <label class="form-label fw-bold">NIP</label>
-              <input type="text" id="inputNIP" class="form-control" readonly placeholder="Otomatis terisi">
+            <!-- PIN / NIP Masuk Secara Manual -->
+            <div class="col-md-4">
+              <label class="form-label fw-bold">PIN / NIP Pegawai</label>
+              <input type="password" id="inputNIP" class="form-control" required placeholder="Masukkan NIP/PIN Anda">
             </div>
 
             <div class="col-md-3">
@@ -164,20 +166,28 @@
   </div>
 
   <script>
-    // MASUKKAN URL GOOGLE APPS SCRIPT WEB APP ANDA DI SINI
+    // 1. ISI URL WEB APP APPS SCRIPT ANDA DI SINI
     const SCRIPT_URL = "URL_WEB_APP_APPS_SCRIPT_ANDA";
 
+    // 2. TEMPELKAN KODE BASE64 LOGO DI SINI (Termasuk prefix data:image/png;base64,...)
+  // Gunakan langsung file gambar dari repositori GitHub
+    const LOGO_BANTEN_BASE64 = "./logo banten.jpeg"; 
+    const LOGO_SEKOLAH_BASE64 = "./logo sman7tangsel.jpeg";
+
     window.onload = function() {
+      // Muat Gambar Logo dari repositori
+      document.getElementById('imgLogoBanten').src = LOGO_BANTEN_BASE64;
+      document.getElementById('imgLogoSekolah').src = LOGO_SEKOLAH_BASE64;
+
       mulaiKamera();
       dapatkanLokasi();
       muatDataAbsensi();
     };
 
-    function isiNIPAuto() {
-      const select = document.getElementById('selectNama');
-      const nip = select.options[select.selectedIndex].getAttribute('data-nip') || '';
-      document.getElementById('inputNIP').value = nip;
-    }
+      mulaiKamera();
+      dapatkanLokasi();
+      muatDataAbsensi();
+    };
 
     function mulaiKamera() {
       navigator.mediaDevices.getUserMedia({ video: true })
@@ -242,13 +252,23 @@
 
     function kirimAbsensi(e) {
       e.preventDefault();
+      const selectNama = document.getElementById('selectNama');
+      const nipValid = selectNama.options[selectNama.selectedIndex].getAttribute('data-nip');
+      const nipInput = document.getElementById('inputNIP').value.trim();
+
+      // Validasi Verifikasi PIN / NIP Pegawai
+      if (nipInput !== nipValid) {
+        alert("❌ PIN / NIP yang Anda masukkan salah untuk pegawai ini!");
+        return;
+      }
+
       const btn = document.getElementById('btnSubmit');
       btn.disabled = true;
       btn.innerText = "Mengirim...";
 
       const payload = {
-        nama: document.getElementById('selectNama').value,
-        nip: document.getElementById('inputNIP').value,
+        nama: selectNama.value,
+        nip: nipInput,
         tipe: document.getElementById('selectTipe').value,
         lokasi: document.getElementById('inputLokasi').value,
         foto: document.getElementById('fotoBase64').value
@@ -261,6 +281,7 @@
       .then(res => res.text())
       .then(resp => {
         alert("✅ Presensi berhasil disimpan!");
+        document.getElementById('inputNIP').value = '';
         btn.disabled = false;
         btn.innerText = "🚀 Simpan Absensi";
         muatDataAbsensi();
