@@ -62,7 +62,7 @@
               </select>
             </div>
 
-            <!-- PIN / NIP Manual Dengan Tombol Mata Intip -->
+            <!-- PIN / NIP Manual Dengan Tombol Mata -->
             <div class="col-md-4">
               <label class="form-label fw-bold">Masukkan NIP / PIN Rahasia</label>
               <div class="input-group">
@@ -157,8 +157,8 @@
   </div>
 
   <script>
-    // PASTE URL WEB APP APPS SCRIPT BARU ANDA DI SINI
-    const SCRIPT_URL = "https://script.google.com/a/macros/admin.sma.belajar.id/s/AKfycbxFWH0vdEihM7QmC-7zFmXC2005yx2AGXnbnv6Ngpg0LJzDPNVMzVES1ojz9u8aYoS_Kw/exec";
+    // PASTE URL HASIL PUBLISH APPS SCRIPT BARU DI SINI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrd5QBr_RodqA-c8OnTZ0nBKuN-Zgro0kIbsGPffSmCTfX2tYx-yTspFkeHTilyeJ-4A/exec";
 
     window.onload = function() {
       mulaiKamera();
@@ -192,7 +192,7 @@
       canvas.height = video.videoHeight || 240;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.5); // Kompresi foto 50% agar pengiriman cepat & ringan
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
       document.getElementById('fotoBase64').value = dataUrl;
       return dataUrl;
     }
@@ -218,7 +218,7 @@
             tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada data absensi.</td></tr>';
             return;
           }
-          // Tampilkan data terbaru di paling atas
+          // Tampilkan baris absensi terbaru di paling atas
           data.slice().reverse().forEach((row, i) => {
             let tr = document.createElement('tr');
             tr.innerHTML = `
@@ -236,7 +236,7 @@
         })
         .catch(err => {
           console.error("Gagal muat data:", err);
-          document.getElementById('bodyTabelAbsensi').innerHTML = '<tr><td colspan="8" class="text-muted py-4">Gagal memuat data dari spreadsheet.</td></tr>';
+          document.getElementById('bodyTabelAbsensi').innerHTML = '<tr><td colspan="8" class="text-muted py-4">Gagal memuat data dari spreadsheet. Pastikan hak akses Apps Script adalah Siapa Saja (Anyone).</td></tr>';
         });
     }
 
@@ -264,7 +264,6 @@
         foto: fotoData
       };
 
-      // Mengirimkan via no-cors mode untuk melewati isu CORS browser sepenuhnya
       fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
