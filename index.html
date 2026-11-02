@@ -15,7 +15,7 @@
     .logo-img { height: 65px; width: auto; object-fit: contain; }
     .img-geotag { width: 55px; height: 55px; object-fit: cover; border-radius: 4px; border: 1px solid #000; }
     
-    /* Area Tanda Tangan (Sembunyi di Layar Web biasa) */
+    /* Area Tanda Tangan */
     .ttd-container { display: none; margin-top: 30px; page-break-inside: avoid; }
     
     /* CSS Khusus Format Cetak / PDF */
@@ -35,7 +35,7 @@
       .badge { border: none !important; color: #000 !important; background: transparent !important; font-weight: normal !important; padding: 0 !important; }
       .img-geotag { width: 45px !important; height: 45px !important; border: 1px solid #000 !important; }
 
-      /* Menampilkan Tanda Tangan Kepala Sekolah Saat Cetak */
+      /* Tanda Tangan Kepala Sekolah */
       .ttd-container { display: flex !important; justify-content: flex-end !important; margin-top: 25px !important; }
       .ttd-box { width: 280px; text-align: left; font-size: 11px; color: #000; }
     }
@@ -146,7 +146,7 @@
           <span class="small fw-bold">Sampai:</span>
           <input type="date" id="filterSampai" class="form-control form-control-sm" style="width: auto;" onchange="filterTabelAbsensi()">
 
-          <button class="btn btn-sm btn-success fw-bold" onclick="window.print()">🖨️ Cetak / PDF</button>
+          <button class="btn btn-sm btn-success fw-bold" onclick="cetakLaporan()">🖨️ Cetak / PDF</button>
           <button class="btn btn-sm btn-danger fw-bold" onclick="resetFilter()">Bersihkan</button>
         </div>
       </div>
@@ -174,11 +174,11 @@
           </table>
         </div>
 
-        <!-- Blok Tanda Tangan Kepala Sekolah (Muncul Saat Cetak) -->
+        <!-- Blok Tanda Tangan Kepala Sekolah -->
         <div class="ttd-container">
           <div class="ttd-box">
             <div>Ditetapkan : Tangerang Selatan</div>
-            <div>Pada tanggal : <span id="tglCetakTtD">23 Oktober 2026</span></div>
+            <div>Pada tanggal : <span id="tglCetakTtD">...</span></div>
             <div class="mt-2">Kepala,</div>
             <br><br><br>
             <div class="fw-bold text-decoration-underline">Muhaji Joko Tingkir, S.Pd, M.Si</div>
@@ -192,7 +192,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwk4KsyWRrVUivj3TDMWo5qM-ZHnxpMkk6Nicr0o8SMo9QiazJ3ADXjbhk4d0tge1nWA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSDanX4Zhm37VAH8Kf6iFCaHgLwmTMIRins0q6y7tH_21JckFqgt_EMDtAFrMKc3UeBg/exec";
 
     let rawAbsensiData = [];
 
@@ -200,7 +200,19 @@
       mulaiKamera();
       dapatkanLokasi();
       muatDataAbsensi();
+      updateTanggalTtD();
     };
+
+    function updateTanggalTtD() {
+      constsekarang = new Date();
+      const opsi = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' };
+      document.getElementById('tglCetakTtD').innerText = sekarang.toLocaleDateString('id-ID', opsi);
+    }
+
+    function cetakLaporan() {
+      updateTanggalTtD();
+      window.print();
+    }
 
     function togglePIN() {
       const input = document.getElementById('inputNIP');
@@ -268,7 +280,8 @@
 
       const namaPegawaiAktif = document.getElementById('selectNama').value.trim();
 
-      let filtered = rawAbsensiData.slice().reverse();
+      // URUTAN KRONOLOGIS (Dari tanggal lama/bulan awal ke tanggal terbaru di bawah)
+      let filtered = rawAbsensiData.slice(); 
       if (namaPegawaiAktif !== "") {
         filtered = filtered.filter(item => item.nama && item.nama.toLowerCase() === namaPegawaiAktif.toLowerCase());
         document.getElementById('judulTabelRekap').innerText = `Riwayat Absensi: ${namaPegawaiAktif}`;
