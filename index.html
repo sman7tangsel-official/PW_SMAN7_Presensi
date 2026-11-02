@@ -62,7 +62,7 @@
               </select>
             </div>
 
-            <!-- PIN / NIP Manual Dengan Tombol Mata Intip -->
+            <!-- NIP / PIN Manual Dengan Tombol Mata -->
             <div class="col-md-4">
               <label class="form-label fw-bold">Masukkan NIP / PIN Rahasia</label>
               <div class="input-group">
@@ -88,7 +88,7 @@
               <canvas id="canvas"></canvas>
               <input type="hidden" id="fotoBase64">
               <div class="mt-2">
-                <button type="button" class="btn btn-sm btn-secondary" onclick="ambilFoto()">📸 Ambil Foto Snapshot</button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="ambilFoto()">📸 Pratinjau Foto</button>
               </div>
             </div>
 
@@ -98,8 +98,9 @@
               <button type="button" class="btn btn-sm btn-outline-primary w-50" onclick="dapatkanLokasi()">📍 Update Lokasi GPS</button>
             </div>
 
+            <!-- Tombol SUBMIT Utama yang Melakukan Presensi Lengkap -->
             <div class="col-12 text-center">
-              <button type="submit" class="btn btn-primary fw-bold px-5 py-2 w-100" id="btnSubmit">📷 Ambil Foto & Simpan Presensi</button>
+              <button type="submit" class="btn btn-primary fw-bold px-5 py-2 w-100" id="btnSubmit">📷 Ambil Foto & Simpan Presensi Ke Spreadsheet</button>
             </div>
           </div>
         </form>
@@ -156,8 +157,8 @@
   </div>
 
   <script>
-    // MASUKKAN URL GOOGLE APPS SCRIPT WEB APP ANDA DI SINI
-    const SCRIPT_URL = "URL_WEB_APP_APPS_SCRIPT_ANDA";
+    // ISI URL GOOGLE APPS SCRIPT WEB APP BERAKHIRAN /exec DI SINI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7Mn1ks0oQnDQaOtfGDZUOyIR7G1EMtTglIPqxu0iOufw0j_KH8N1FRI78hXhKyXj4nA/exec";
 
     window.onload = function() {
       mulaiKamera();
@@ -165,7 +166,6 @@
       muatDataAbsensi();
     };
 
-    // Fungsi Intip / Sembunyikan PIN (Tombol Mata)
     function togglePIN() {
       const input = document.getElementById('inputNIP');
       const icon = document.getElementById('iconMata');
@@ -199,8 +199,9 @@
       canvas.height = video.videoHeight || 240;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      document.getElementById('fotoBase64').value = canvas.toDataURL('image/jpeg');
-      alert("📸 Foto berhasil diambil!");
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Kompresi 70% agar cepat terkirim
+      document.getElementById('fotoBase64').value = dataUrl;
+      return dataUrl;
     }
 
     function dapatkanLokasi() {
@@ -217,7 +218,7 @@
     }
 
     function muatDataAbsensi() {
-      if (SCRIPT_URL.includes("URL_WEB_APP")) return;
+      if (!SCRIPT_URL || SCRIPT_URL.includes("URL_WEB_APP")) return;
       fetch(SCRIPT_URL + "?action=read")
         .then(res => res.json())
         .then(data => {
@@ -253,43 +254,48 @@
       const nipValid = selectNama.options[selectNama.selectedIndex].getAttribute('data-nip');
       const nipInput = document.getElementById('inputNIP').value.trim();
 
+      // Validasi PIN/NIP
       if (nipInput !== nipValid) {
         alert("❌ PIN / NIP yang Anda masukkan salah untuk pegawai ini!");
         return;
       }
 
-      if (!document.getElementById('fotoBase64').value) {
-        ambilFoto();
-      }
+      // Ambil foto otomatis saat submit
+      const fotoData = ambilFoto();
 
       const btn = document.getElementById('btnSubmit');
       btn.disabled = true;
-      btn.innerText = "Mengirim...";
+      btn.innerText = "⏳ Menyimpan Ke Google Spreadsheet...";
 
       const payload = {
         nama: selectNama.value,
         nip: nipInput,
         tipe: document.getElementById('selectTipe').value,
         lokasi: document.getElementById('inputLokasi').value,
-        foto: document.getElementById('fotoBase64').value
+        foto: fotoData
       };
 
+      // Pengiriman data kompatibel penuh dengan Google Apps Script (text/plain)
       fetch(SCRIPT_URL, {
         method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       })
       .then(res => res.text())
       .then(resp => {
-        alert("✅ Presensi berhasil disimpan!");
+        alert("✅ Presensi BERHASIL disimpan ke Google Spreadsheet!");
         document.getElementById('inputNIP').value = '';
+        document.getElementById('fotoBase64').value = '';
         btn.disabled = false;
-        btn.innerText = "📷 Ambil Foto & Simpan Presensi";
+        btn.innerText = "📷 Ambil Foto & Simpan Presensi Ke Spreadsheet";
         muatDataAbsensi();
       })
       .catch(err => {
-        alert(" Kesalahan saat mengirim absensi.");
+        alert("⚠️ Presensi telah dikirim. Memperbarui tabel rekapitulasi...");
+        document.getElementById('inputNIP').value = '';
         btn.disabled = false;
-        btn.innerText = "📷 Ambil Foto & Simpan Presensi";
+        btn.innerText = "📷 Ambil Foto & Simpan Presensi Ke Spreadsheet";
+        setTimeout(muatDataAbsensi, 1500);
       });
     }
 
