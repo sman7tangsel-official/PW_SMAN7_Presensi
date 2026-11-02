@@ -13,7 +13,8 @@
     #webcam { width: 100%; max-width: 400px; height: auto; border-radius: 8px; border: 2px solid #dee2e6; }
     #canvas { display: none; }
     .logo-img { height: 65px; width: auto; object-fit: contain; }
-    .img-geotag { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #000; cursor: pointer; }
+    .img-geotag { width: 65px; height: 65px; object-fit: cover; border-radius: 4px; border: 1px solid #000; cursor: pointer; }
+    .info-geotag-cetak { display: none; font-size: 8px; color: #000; margin-top: 2px; line-height: 1.1; }
     
     .ttd-container { display: none; margin-top: 30px; page-break-inside: avoid; }
     
@@ -24,7 +25,7 @@
 
     @media print {
       .no-print, .btn, form, .input-group, select, input { display: none !important; }
-      body { background-color: #ffffff !important; font-size: 11px !important; color: #000 !important; }
+      body { background-color: #ffffff !important; font-size: 10.5px !important; color: #000 !important; }
       .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
       .card { border: none !important; box-shadow: none !important; background: transparent !important; }
       .card-header { background: transparent !important; border: none !important; padding: 5px 0 !important; }
@@ -35,10 +36,13 @@
       
       .table-responsive { overflow: visible !important; }
       table.table-cetak { width: 100% !important; border-collapse: collapse !important; border: 1.5px solid #000 !important; }
-      table.table-cetak th, table.table-cetak td { border: 1px solid #000 !important; padding: 4px 5px !important; color: #000 !important; vertical-align: middle !important; text-align: center !important; }
+      table.table-cetak th, table.table-cetak td { border: 1px solid #000 !important; padding: 3px 4px !important; color: #000 !important; vertical-align: middle !important; text-align: center !important; }
       table.table-cetak tr { page-break-inside: avoid !important; }
       .badge { border: none !important; color: #000 !important; background: transparent !important; font-weight: normal !important; padding: 0 !important; }
-      .img-geotag { width: 50px !important; height: 50px !important; border: 1px solid #000 !important; }
+      
+      /* Format Ukuran Gambar Geotag Saat Dicetak */
+      .img-geotag { width: 55px !important; height: 55px !important; border: 1px solid #000 !important; }
+      .info-geotag-cetak { display: block !important; }
 
       .ttd-container { display: flex !important; justify-content: flex-end !important; margin-top: 25px !important; }
       .ttd-box { width: 280px; text-align: left; font-size: 11px; color: #000; }
@@ -175,14 +179,14 @@
                 </th>
               </tr>
               <tr class="table-dark">
-                <th style="width: 5%;">NO</th>
+                <th style="width: 4%;">NO</th>
                 <th style="width: 22%;">TANGGAL & WAKTU</th>
-                <th style="width: 11%;">TIPE</th>
+                <th style="width: 10%;">TIPE</th>
                 <th style="width: 14%;">NIP</th>
-                <th style="width: 18%;">NAMA PEGAWAI</th>
-                <th style="width: 8%;">STATUS</th>
+                <th style="width: 17%;">NAMA PEGAWAI</th>
+                <th style="width: 7%;">STATUS</th>
                 <th style="width: 12%;">KOORDINAT LOKASI</th>
-                <th style="width: 10%;">FOTO GEOTAG</th>
+                <th style="width: 14%;">FOTO GEOTAG</th>
               </tr>
             </thead>
 
@@ -212,7 +216,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx98EMW7R9aZyuYT_f33twcdVlg9mrjtAPfuCMvsRduRGtqjGPbfJWUP8giDubnn8br_g/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6c6oOJxMJ2fzky0gkXqcMHaU8N2OK-OxcI-FiU2I7ZRQO97rLuqN6YtYRSLWVyXfWmg/exec";
 
     let rawAbsensiData = [];
     let isPinVerified = false;
@@ -294,7 +298,7 @@
         .catch(err => { console.warn("Kamera tidak terbuka:", err); });
     }
 
-    // FUNGSI AMBIL FOTO DENGAN FORMAT WATERMARK PERSIS SEPERTI APLIKASI SEBELUMNYA
+    // FUNGSI AMBIL FOTO DENGAN EMBEDDED WATERMARK TEXT OVERLAY
     function ambilFoto() {
       const video = document.getElementById('webcam');
       const canvas = document.getElementById('canvas');
@@ -302,24 +306,24 @@
       canvas.height = video.videoHeight || 480;
       const ctx = canvas.getContext('2d');
       
-      // Draw Snapshot Kamera
+      // Draw Gambar Kamera
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const w = canvas.width;
       const h = canvas.height;
-      const overlayHeight = 55; // Tinggi baris hitam transparan di bagian bawah
+      const overlayHeight = 60; 
 
-      // Gambar Baris Kotak Hitam Transparan
+      // Gambar Baris Hitam Transparan di Bagian Bawah Gambar
       ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
       ctx.fillRect(0, h - overlayHeight, w, overlayHeight);
 
-      // Data Pegawai & Absensi untuk Watermark
+      // Ambil Data Pegawai
       const selectNama = document.getElementById('selectNama');
       const namaPegawai = selectNama.value || "Pegawai";
       const nipPegawai = selectNama.selectedIndex > 0 ? selectNama.options[selectNama.selectedIndex].getAttribute('data-nip') : "";
       const tipeAbsensi = document.getElementById('selectTipe').value || "ABSENSI";
 
-      // Tanggal & Jam Format Indonesia
+      // Tanggal & Jam
       const sekarang = new Date();
       const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][sekarang.getDay()];
       const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][sekarang.getMonth()];
@@ -327,17 +331,16 @@
       const jamStr = `pukul ${String(sekarang.getHours()).padStart(2, '0')}.${String(sekarang.getMinutes()).padStart(2, '0')}.${String(sekarang.getSeconds()).padStart(2, '0')}`;
       const lokasiStr = document.getElementById('inputLokasi').value || "-6.255848, 106.661728";
 
-      // Baris 1 Teks Watermark: [TIPE ABSENSI] Nama (NIP)
+      // Tulis Teks Watermark Geotag Presisi Sesuai Gambar Rujukan
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 13px Arial";
-      ctx.fillText(`[${tipeAbsensi.toUpperCase()}] ${namaPegawai} (${nipPegawai})`, 12, h - 32);
+      ctx.font = "bold 14px Arial";
+      ctx.fillText(`[${tipeAbsensi.toUpperCase()}] ${namaPegawai} (${nipPegawai})`, 12, h - 35);
 
-      // Baris 2 Teks Watermark: Tanggal, Waktu | GPS | Sekolah
       ctx.fillStyle = "#d1d5db";
       ctx.font = "11px Arial";
       ctx.fillText(`${tglStr} ${jamStr} | GPS: ${lokasiStr} | SMAN 7 Tangsel`, 12, h - 14);
 
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
       document.getElementById('fotoBase64').value = dataUrl;
       return dataUrl;
     }
@@ -402,7 +405,17 @@
           if (match && match[1]) {
             let fileId = match[1];
             let directImgUrl = `https://lh3.googleusercontent.com/d/${fileId}=s200`;
-            elementFoto = `<a href="${row.linkFoto}" target="_blank" title="Klik untuk memperbesar"><img src="${directImgUrl}" class="img-geotag" alt="Foto Geotag" onerror="this.onerror=null; this.src='https://via.placeholder.com/60?text=Foto';"></a>`;
+            
+            // Format teks pelengkap di bawah foto saat dicetak untuk menjaga integritas data cetak
+            let infoCetak = `<div class="info-geotag-cetak"><b>[${(row.tipe||'').toUpperCase()}]</b><br>${row.waktu||''}<br>GPS: ${row.lokasi||''}</div>`;
+            
+            elementFoto = `
+              <div class="d-flex flex-column align-items-center">
+                <a href="${row.linkFoto}" target="_blank" title="Klik untuk memperbesar">
+                  <img src="${directImgUrl}" class="img-geotag" alt="Foto Geotag" onerror="this.onerror=null; this.src='https://via.placeholder.com/60?text=Foto';">
+                </a>
+                ${infoCetak}
+              </div>`;
           } else {
             elementFoto = `<a href="${row.linkFoto}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2">Lihat Foto</a>`;
           }
