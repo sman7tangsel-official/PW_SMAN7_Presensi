@@ -9,6 +9,8 @@
   <style>
     body { background-color: #f8f9fa; }
     .card-header-custom { background-color: #ffffff; border-bottom: 2px solid #0d6efd; }
+    #webcam { width: 100%; max-width: 400px; height: auto; border-radius: 8px; border: 2px solid #dee2e6; }
+    #canvas { display: none; }
     @media print {
       .no-print { display: none !important; }
       .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
@@ -34,14 +36,89 @@
       </div>
     </div>
 
+    <!-- Area Form Presensi Kehadiran & Kamera Geotag -->
+    <div class="card mb-4 shadow-sm no-print">
+      <div class="card-header bg-primary text-white">
+        <h6 class="fw-bold mb-0">📷 Form Presensi / Absensi Pegawai</h6>
+      </div>
+      <div class="card-body">
+        <form id="formAbsensi" onsubmit="kirimAbsensi(event)">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Pilih Nama Pegawai</label>
+              <select id="selectNama" class="form-select" required onchange="isiNIPAuto()">
+                <option value="">-- Pilih Pegawai --</option>
+                <option value="Dinnar Mohammad Hasan" data-nip="198308222025212039">Dinnar Mohammad Hasan</option>
+                <option value="Mustakim" data-nip="200111142025211015">Mustakim</option>
+                <option value="Nuradi sumarna" data-nip="197512252025211050">Nuradi sumarna</option>
+                <option value="Wawan setiawan" data-nip="197805102025211106">Wawan setiawan</option>
+                <option value="Asep nur" data-nip="198301042025211088">Asep nur</option>
+                <option value="Hatta Amanu" data-nip="199710292025211048">Hatta Amanu</option>
+                <option value="Sahari" data-nip="197006142025211030">Sahari</option>
+                <option value="Yadik" data-nip="19840102025211096">Yadik</option>
+                <option value="Suparyadi" data-nip="198003152025211044">Suparyadi</option>
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold">NIP</label>
+              <input type="text" id="inputNIP" class="form-control" readonly placeholder="Otomatis terisi">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Tipe Absensi</label>
+              <select id="selectTipe" class="form-select" required>
+                <option value="Absen Masuk">Absen Masuk</option>
+                <option value="Absen Pulang">Absen Pulang</option>
+              </select>
+            </div>
+
+            <!-- Kamera & Lokasi -->
+            <div class="col-md-6 text-center my-3">
+              <label class="form-label fw-bold d-block">Pratinjau Kamera</label>
+              <video id="webcam" autoplay playsinline></video>
+              <canvas id="canvas"></canvas>
+              <input type="hidden" id="fotoBase64">
+              <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="ambilFoto()">📸 Ambil Foto</button>
+              </div>
+            </div>
+
+            <div class="col-md-6 my-3 d-flex flex-column justify-content-center">
+              <label class="form-label fw-bold">Koordinat Lokasi GPS</label>
+              <input type="text" id="inputLokasi" class="form-control mb-2" readonly placeholder="Mendeteksi lokasi...">
+              <button type="button" class="btn btn-sm btn-outline-primary w-50" onclick="dapatkanLokasi()">📍 Update Lokasi GPS</button>
+            </div>
+
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-success fw-bold px-4" id="btnSubmit">🚀 Simpan Absensi</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Area Rekapitulasi Absensi Pegawai -->
     <div class="card shadow-sm">
       <div class="card-header card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h6 class="fw-bold mb-0 text-dark">📋 Rekapitulasi Absensi Pegawai</h6>
         
-        <!-- Filter Baris: Tipe Absensi, Dari Tanggal, Sampai Tanggal, & Tombol Aksi -->
         <div class="d-flex align-items-center gap-2 flex-wrap ms-auto no-print">
-          <!-- Dropdown Tipe Absensi -->
+          <!-- Dropdown Pegawai -->
+          <select id="filterPegawai" class="form-select form-select-sm" style="width: auto;" onchange="filterTabelAbsensi()">
+            <option value="">Semua Pegawai</option>
+            <option value="Dinnar Mohammad Hasan">Dinnar Mohammad Hasan</option>
+            <option value="Mustakim">Mustakim</option>
+            <option value="Nuradi sumarna">Nuradi sumarna</option>
+            <option value="Wawan setiawan">Wawan setiawan</option>
+            <option value="Asep nur">Asep nur</option>
+            <option value="Hatta Amanu">Hatta Amanu</option>
+            <option value="Sahari">Sahari</option>
+            <option value="Yadik">Yadik</option>
+            <option value="Suparyadi">Suparyadi</option>
+          </select>
+
+          <!-- Dropdown Tipe -->
           <select id="filterTipe" class="form-select form-select-sm" style="width: auto;" onchange="filterTabelAbsensi()">
             <option value="">Semua Tipe</option>
             <option value="Absen Masuk">Absen Masuk</option>
@@ -55,7 +132,6 @@
           <span class="small fw-semibold">Sampai:</span>
           <input type="date" id="filterSampai" class="form-control form-control-sm" style="width: auto;" onchange="filterTabelAbsensi()">
 
-          <!-- Tombol Cetak / PDF & Bersihkan -->
           <button class="btn btn-sm btn-success fw-bold" onclick="window.print()">🖨️ Cetak / PDF</button>
           <button class="btn btn-sm btn-danger fw-bold" onclick="resetFilter()">Bersihkan</button>
         </div>
@@ -78,7 +154,7 @@
             </thead>
             <tbody id="bodyTabelAbsensi">
               <tr>
-                <td colspan="8" class="text-muted py-4">Belum ada data absensi.</td>
+                <td colspan="8" class="text-muted py-4">Memuat data absensi...</td>
               </tr>
             </tbody>
           </table>
@@ -88,7 +164,116 @@
   </div>
 
   <script>
+    // MASUKKAN URL GOOGLE APPS SCRIPT WEB APP ANDA DI SINI
+    const SCRIPT_URL = "URL_WEB_APP_APPS_SCRIPT_ANDA";
+
+    window.onload = function() {
+      mulaiKamera();
+      dapatkanLokasi();
+      muatDataAbsensi();
+    };
+
+    function isiNIPAuto() {
+      const select = document.getElementById('selectNama');
+      const nip = select.options[select.selectedIndex].getAttribute('data-nip') || '';
+      document.getElementById('inputNIP').value = nip;
+    }
+
+    function mulaiKamera() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { document.getElementById('webcam').srcObject = stream; })
+        .catch(err => { console.warn("Kamera tidak diizinkan atau tidak ditemukan."); });
+    }
+
+    function ambilFoto() {
+      const video = document.getElementById('webcam');
+      const canvas = document.getElementById('canvas');
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 240;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      document.getElementById('fotoBase64').value = canvas.toDataURL('image/jpeg');
+      alert("📸 Foto berhasil diambil!");
+    }
+
+    function dapatkanLokasi() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            document.getElementById('inputLokasi').value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+          },
+          err => {
+            document.getElementById('inputLokasi').value = "Lokasi Tidak Terdeteksi";
+          }
+        );
+      }
+    }
+
+    function muatDataAbsensi() {
+      if (SCRIPT_URL.includes("URL_WEB_APP")) return;
+      fetch(SCRIPT_URL + "?action=read")
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('bodyTabelAbsensi');
+          tbody.innerHTML = '';
+          if(!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada data absensi.</td></tr>';
+            return;
+          }
+          data.forEach((row, i) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${i + 1}</td>
+              <td>${row.waktu || '-'}</td>
+              <td>${row.tipe || '-'}</td>
+              <td>${row.nip || '-'}</td>
+              <td>${row.nama || '-'}</td>
+              <td><span class="badge bg-success">Hadir</span></td>
+              <td>${row.lokasi || '-'}</td>
+              <td>${row.linkFoto ? `<a href="${row.linkFoto}" target="_blank" class="btn btn-xs btn-outline-primary">Lihat Foto</a>` : '-'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(() => {
+          document.getElementById('bodyTabelAbsensi').innerHTML = '<tr><td colspan="8" class="text-muted py-4">Belum ada data absensi.</td></tr>';
+        });
+    }
+
+    function kirimAbsensi(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmit');
+      btn.disabled = true;
+      btn.innerText = "Mengirim...";
+
+      const payload = {
+        nama: document.getElementById('selectNama').value,
+        nip: document.getElementById('inputNIP').value,
+        tipe: document.getElementById('selectTipe').value,
+        lokasi: document.getElementById('inputLokasi').value,
+        foto: document.getElementById('fotoBase64').value
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.text())
+      .then(resp => {
+        alert("✅ Presensi berhasil disimpan!");
+        btn.disabled = false;
+        btn.innerText = "🚀 Simpan Absensi";
+        muatDataAbsensi();
+      })
+      .catch(err => {
+        alert(" Kesalahan saat mengirim absensi.");
+        btn.disabled = false;
+        btn.innerText = "🚀 Simpan Absensi";
+      });
+    }
+
     function filterTabelAbsensi() {
+      const pegawai = document.getElementById('filterPegawai').value.toLowerCase();
       const tipe = document.getElementById('filterTipe').value.toLowerCase();
       const dari = document.getElementById('filterDari').value;
       const sampai = document.getElementById('filterSampai').value;
@@ -97,27 +282,19 @@
       rows.forEach(row => {
         if (row.children.length < 8) return;
         
+        const rowPegawai = row.children[4].innerText.toLowerCase();
         const rowTipe = row.children[2].innerText.toLowerCase();
-        const rowTanggalText = row.children[1].innerText; // Format contoh: 16/10/2026 atau YYYY-MM-DD
         
+        let matchPegawai = !pegawai || rowPegawai.includes(pegawai);
         let matchTipe = !tipe || rowTipe.includes(tipe);
         let matchTanggal = true;
 
-        if (dari || sampai) {
-          // Parse tanggal dari tabel jika ada
-          const dateParts = rowTanggalText.split(' ')[0].split('/');
-          if (dateParts.length === 3) {
-            const rowDate = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
-            if (dari && rowDate < new Date(dari)) matchTanggal = false;
-            if (sampai && rowDate > new Date(sampai)) matchTanggal = false;
-          }
-        }
-
-        row.style.display = (matchTipe && matchTanggal) ? '' : 'none';
+        row.style.display = (matchPegawai && matchTipe && matchTanggal) ? '' : 'none';
       });
     }
 
     function resetFilter() {
+      document.getElementById('filterPegawai').value = '';
       document.getElementById('filterTipe').value = '';
       document.getElementById('filterDari').value = '';
       document.getElementById('filterSampai').value = '';
